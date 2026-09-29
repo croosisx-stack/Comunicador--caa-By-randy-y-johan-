@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mi Comunicador">
+<title>Mi Comunicador</title>
+<style>
+  :root{
+    --bg:#FFFBF2; --ink:#2E2A26; --card:#FFFFFF; --border:#E7DFCF;
+    --personas:#F7C948; --acciones:#6FBF73; --cosas:#F2955C; --sentir:#EE7FA0; --preguntas:#8E7FE0;
+    --descriptivo:#5B9BD5; --misc:#D8D2C4;
+    --panel-h: 128px;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ --bg:#211E1A; --ink:#F3EEE4; --card:#2B2722; --border:#43392E; }
+  }
+  :root[data-theme="dark"]{ --bg:#211E1A; --ink:#F3EEE4; --card:#2B2722; --border:#43392E; }
+  :root[data-theme="alto"]{ --bg:#000; --ink:#FFF; --card:#111; --border:#FFF; }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family: 'Baloo 2','Comic Sans MS',system-ui,sans-serif;
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  header{
+    padding:14px 16px 8px; display:flex; align-items:center; justify-content:space-between;
+    padding-top:calc(14px + env(safe-area-inset-top,0px));
+  }
+  h1{font-size:1.3rem; margin:0;}
+  .tools button{
+    font-size:0.95rem; padding:8px 12px; border-radius:14px; border:2px solid var(--border);
+    background:var(--card); color:var(--ink); cursor:pointer; margin-left:6px;
+  }
+
+  #sentence{
+    margin:0 16px 10px; min-height:var(--panel-h); background:var(--card);
+    border:3px solid var(--border); border-radius:20px; padding:10px;
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap; overflow-y:auto;
+  }
+  #sentence .placeholder{opacity:0.5; font-size:1rem;}
+  .chip{
+    display:flex; flex-direction:column; align-items:center; background:var(--bg);
+    border-radius:14px; padding:6px 10px; font-size:0.85rem; border:2px solid var(--border);
+  }
+  .chip span.emoji{font-size:1.6rem;}
+
+  .actions{display:flex; gap:10px; margin:0 16px 12px;}
+  .actions button{
+    flex:1; font-size:1.05rem; font-weight:700; padding:14px; border-radius:16px; border:none;
+    cursor:pointer; color:#1a1a1a;
+  }
+  #speak{background:#6FBF73; color:#123;}
+  #clear{background:var(--card); border:2px solid var(--border); color:var(--ink);}
+
+  #core{display:flex; gap:8px; overflow-x:auto; padding:0 16px 10px; -webkit-overflow-scrolling:touch;}
+  #core button{
+    flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:2px;
+    padding:8px 12px; border-radius:14px; border:2px solid var(--border); background:var(--card);
+    color:var(--ink); font-weight:700; font-size:0.85rem; cursor:pointer;
+  }
+  #core .emoji{font-size:1.4rem;}
+  #history{padding:0 16px 6px; font-size:0.85rem; opacity:0.8; display:flex; gap:8px; overflow-x:auto;}
+  #history button{border:none; background:none; color:var(--ink); text-decoration:underline; cursor:pointer; font-size:0.85rem; flex:0 0 auto;}
+
+  nav{display:flex; gap:8px; overflow-x:auto; padding:0 16px 10px; -webkit-overflow-scrolling:touch;}
+  nav button{
+    flex:0 0 auto; padding:10px 16px; border-radius:999px; border:2px solid transparent;
+    font-size:1rem; font-weight:700; cursor:pointer; color:#1a1a1a; white-space:nowrap;
+  }
+  nav button.active{border-color:var(--ink);}
+
+  main{flex:1; overflow-y:auto; padding:0 16px 20px;}
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:12px;
+  }
+  .tile{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    border-radius:18px; border:3px solid rgba(0,0,0,0.15); padding:14px 8px; cursor:pointer;
+    color:#1a1a1a; font-weight:700; font-size:1rem; min-height:100px;
+  }
+  .tile .emoji{font-size:2.4rem;}
+  .tile:active{transform:scale(0.95);}
+
+  :root[data-theme="alto"] .tile{color:#000; border-color:#FFF;}
+  :root[data-theme="alto"] nav button{color:#000;}
+
+  [data-size="grande"] .tile{font-size:1.2rem;}
+  [data-size="grande"] .tile .emoji{font-size:3rem;}
+  [data-size="grande"] .chip{font-size:1rem;}
+</style>
+</head>
+<body data-size="normal">
+<header>
+  <h1>Mi Comunicador</h1>
+  <div class="tools">
+    <button id="btnContrast" title="Alto contraste">◐ Contraste</button>
+    <button id="btnSize" title="Texto grande">🔎 Texto</button>
+  </div>
+</header>
+
+<div id="sentence"><span class="placeholder">Toca los dibujos para armar una frase…</span></div>
+
+<div class="actions">
+  <button id="speak">🔊 Hablar frase</button>
+  <button id="undo">↩️ Deshacer</button>
+  <button id="clear">🗑️ Borrar</button>
+</div>
+
+<div id="core"></div>
+<div id="history"></div>
+<nav id="tabs"></nav>
+<main><div class="grid" id="grid"></div></main>
+
+<script>
+const categorias = [
+  { id:'personas', nombre:'Personas', color:'var(--personas)', items:[
+    ['🧑','yo'],['👩','mamá'],['👨','papá'],['👧','amigo'],['👦','amiga'],['👶','bebé'],['👵','abuela'],['👴','abuelo'],
+    ['👩‍⚕️','doctor'],['🧑‍🏫','maestro'],['👮','policía'],['👨‍👩‍👧','familia']
+  ]},
+  { id:'acciones', nombre:'Acciones', color:'var(--acciones)', items:[
+    ['▶️','quiero'],['✋','parar'],['🍽️','comer'],['🚰','tomar agua'],['🚽','baño'],['😴','dormir'],['🎮','jugar'],
+    ['🤗','abrazo'],['➕','más'],['🏃','ir'],['🛁','bañarse'],['🪥','cepillarme'],['👕','vestirme'],['📚','estudiar'],
+    ['🖐️','dame'],['👀','ver'],['🎧','escuchar'],['✍️','escribir']
+  ]},
+  { id:'cosas', nombre:'Comida y bebida', color:'var(--cosas)', items:[
+    ['🍎','manzana'],['🍌','guineo'],['🥛','leche'],['💧','agua'],['🍞','pan'],['🍚','arroz'],['🍗','pollo'],
+    ['🍫','chocolate'],['🍪','galleta'],['🧃','jugo'],['🍕','pizza'],['🍦','helado']
+  ]},
+  { id:'objetos', nombre:'Objetos', color:'var(--cosas)', items:[
+    ['🧸','peluche'],['📖','libro'],['⚽','pelota'],['🎵','música'],['📱','tablet'],['🖍️','crayón'],
+    ['🎒','mochila'],['🧩','rompecabezas'],['🚗','carro'],['🧴','jabón']
+  ]},
+  { id:'lugares', nombre:'Lugares', color:'var(--cosas)', items:[
+    ['🏠','casa'],['🏫','escuela'],['🏥','hospital'],['🛒','tienda'],['🏞️','parque'],['🚻','baño público'],
+    ['🚌','autobús'],['⛪','iglesia']
+  ]},
+  { id:'sentir', nombre:'Sentimientos', color:'var(--sentir)', items:[
+    ['😊','feliz'],['😢','triste'],['😠','enojado'],['😨','miedo'],['🤕','dolor'],['🥱','cansado'],
+    ['❤️','me gusta'],['👎','no me gusta'],['😖','incómodo'],['🤗','tranquilo'],['😵','mareado'],['🥳','emocionado']
+  ]},
+  { id:'descriptivo', nombre:'Colores y números', color:'var(--descriptivo)', items:[
+    ['🔴','rojo'],['🔵','azul'],['🟡','amarillo'],['🟢','verde'],['⚪','blanco'],['⚫','negro'],
+    ['1️⃣','uno'],['2️⃣','dos'],['3️⃣','tres'],['🔠','grande'],['🔡','pequeño']
+  ]},
+  { id:'preguntas', nombre:'Preguntas', color:'var(--preguntas)', items:[
+    ['❓','qué'],['📍','dónde'],['👤','quién'],['⏰','cuándo'],['❔','por qué'],['🔢','cuánto'],['🤔','cómo']
+  ]},
+  { id:'mis', nombre:'Mis palabras', color:'var(--misc)', items:[] },
+];
+
+let misPalabras = [];
+try{ misPalabras = JSON.parse(localStorage.getItem('comunicador_mispalabras')||'[]'); }catch(e){ misPalabras = []; }
+categorias.find(c=>c.id==='mis').items = misPalabras;
+function guardarMisPalabras(){
+  try{ localStorage.setItem('comunicador_mispalabras', JSON.stringify(misPalabras)); }catch(e){}
+}
+
+const nucleo = [['💭','quiero'],['➕','más'],['🚫','no'],['✅','sí'],['🆘','ayuda'],['🛑','terminar'],['👀','mira']];
+
+const tabs = document.getElementById('tabs');
+const grid = document.getElementById('grid');
+const sentenceEl = document.getElementById('sentence');
+const coreEl = document.getElementById('core');
+const historyEl = document.getElementById('history');
+let frase = [];
+let historial = [];
+try{ historial = JSON.parse(localStorage.getItem('comunicador_historial')||'[]'); }catch(e){ historial = []; }
+
+function renderCore(){
+  coreEl.innerHTML = '';
+  nucleo.forEach(([emoji,palabra])=>{
+    const b = document.createElement('button');
+    b.innerHTML = `<span class="emoji">${emoji}</span><span>${palabra}</span>`;
+    b.onclick = ()=> agregar(emoji, palabra);
+    coreEl.appendChild(b);
+  });
+}
+
+function renderHistory(){
+  historyEl.innerHTML = '';
+  if(historial.length===0) return;
+  const label = document.createElement('span');
+  label.textContent = 'Recientes:';
+  historyEl.appendChild(label);
+  historial.slice(0,5).forEach(txt=>{
+    const b = document.createElement('button');
+    b.textContent = txt;
+    b.onclick = ()=> hablar(txt);
+    historyEl.appendChild(b);
+  });
+}
+function guardarHistorial(txt){
+  historial = [txt, ...historial.filter(t=>t!==txt)].slice(0,5);
+  try{ localStorage.setItem('comunicador_historial', JSON.stringify(historial)); }catch(e){}
+  renderHistory();
+}
+
+function renderTabs(activeId){
+  tabs.innerHTML = '';
+  categorias.forEach(cat=>{
+    const b = document.createElement('button');
+    b.textContent = cat.nombre;
+    b.style.background = cat.color;
+    b.className = cat.id===activeId ? 'active' : '';
+    b.onclick = ()=>{ renderTabs(cat.id); renderGrid(cat); };
+    tabs.appendChild(b);
+  });
+}
+
+function renderGrid(cat){
+  grid.innerHTML = '';
+  if(cat.id==='mis'){
+    const form = document.createElement('div');
+    form.style.cssText='display:flex; gap:6px; margin-bottom:12px; grid-column:1/-1;';
+    form.innerHTML = `<input id="nuevoEmoji" placeholder="😀" style="width:54px; font-size:1.4rem; text-align:center; border-radius:10px; border:2px solid var(--border); padding:6px;">
+      <input id="nuevaPalabra" placeholder="Escribe una palabra" style="flex:1; font-size:1rem; border-radius:10px; border:2px solid var(--border); padding:6px 10px;">
+      <button id="btnAgregarPalabra" style="border:none; border-radius:10px; background:var(--acciones); padding:6px 14px; font-weight:700; cursor:pointer;">➕</button>`;
+    grid.appendChild(form);
+    document.getElementById('btnAgregarPalabra').onclick = ()=>{
+      const e = document.getElementById('nuevoEmoji').value.trim() || '💬';
+      const w = document.getElementById('nuevaPalabra').value.trim();
+      if(!w) return;
+      misPalabras.push([e,w]);
+      guardarMisPalabras();
+      renderGrid(cat);
+    };
+  }
+  cat.items.forEach(([emoji,palabra],idx)=>{
+    const t = document.createElement('button');
+    t.className='tile';
+    t.style.background = cat.color;
+    t.innerHTML = `<span class="emoji">${emoji}</span><span>${palabra}</span>`;
+    t.onclick = ()=> agregar(emoji, palabra);
+    if(cat.id==='mis'){
+      t.oncontextmenu = (ev)=>{ ev.preventDefault(); if(confirm('¿Borrar "'+palabra+'"?')){ misPalabras.splice(idx,1); guardarMisPalabras(); renderGrid(cat); } };
+      t.title = 'Mantén presionado (o clic derecho) para borrar';
+      let presionado;
+      t.addEventListener('touchstart', ()=>{ presionado = setTimeout(()=>{ if(confirm('¿Borrar "'+palabra+'"?')){ misPalabras.splice(idx,1); guardarMisPalabras(); renderGrid(cat); } }, 600); });
+      t.addEventListener('touchend', ()=> clearTimeout(presionado));
+    }
+    grid.appendChild(t);
+  });
+}
+
+function agregar(emoji, palabra){
+  frase.push({emoji, palabra});
+  renderSentence();
+  hablar(palabra);
+}
+
+function renderSentence(){
+  if(frase.length===0){
+    sentenceEl.innerHTML = '<span class="placeholder">Toca los dibujos para armar una frase…</span>';
+    return;
+  }
+  sentenceEl.innerHTML = '';
+  frase.forEach((f,i)=>{
+    const chip = document.createElement('div');
+    chip.className='chip';
+    chip.innerHTML = `<span class="emoji">${f.emoji}</span><span>${f.palabra}</span>`;
+    chip.onclick = ()=>{ frase.splice(i,1); renderSentence(); };
+    sentenceEl.appendChild(chip);
+  });
+}
+
+function hablar(texto){
+  try{
+    const u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    u.rate = 0.9;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }catch(e){ console.error('voz no disponible', e); }
+}
+
+document.getElementById('speak').onclick = ()=>{
+  if(frase.length===0) return;
+  const texto = frase.map(f=>f.palabra).join(', ');
+  hablar(texto);
+  guardarHistorial(texto);
+};
+document.getElementById('undo').onclick = ()=>{ frase.pop(); renderSentence(); };
+document.getElementById('clear').onclick = ()=>{ frase=[]; renderSentence(); };
+
+document.getElementById('btnContrast').onclick = ()=>{
+  const root = document.documentElement;
+  root.setAttribute('data-theme', root.getAttribute('data-theme')==='alto' ? 'light' : 'alto');
+};
+document.getElementById('btnSize').onclick = ()=>{
+  const b = document.body;
+  b.dataset.size = b.dataset.size==='normal' ? 'grande' : 'normal';
+};
+
+renderTabs('personas');
+renderGrid(categorias[0]);
+renderCore();
+renderHistory();
+</script>
+</body>
+</html>
