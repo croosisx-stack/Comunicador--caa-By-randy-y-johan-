@@ -6,12 +6,15 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Mi Comunicador">
+<meta name="theme-color" content="#F7C948">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Mi Comunicador</title>
 <style>
   :root{
     --bg:#FFFBF2; --ink:#2E2A26; --card:#FFFFFF; --border:#E7DFCF;
     --personas:#F7C948; --acciones:#6FBF73; --cosas:#F2955C; --sentir:#EE7FA0; --preguntas:#8E7FE0;
-    --descriptivo:#5B9BD5; --misc:#D8D2C4;
+    --descriptivo:#5B9BD5; --misc:#D8D2C4; --frases:#F4D35E;
     --panel-h: 128px;
     box-sizing:border-box;
     padding-top:env(safe-area-inset-top,0px);
@@ -31,14 +34,17 @@
     display:flex; flex-direction:column; overflow:hidden;
   }
   header{
-    padding:14px 16px 8px; display:flex; align-items:center; justify-content:space-between;
+    padding:14px 16px 8px; display:flex; align-items:center; justify-content:space-between; gap:8px;
     padding-top:calc(14px + env(safe-area-inset-top,0px));
   }
-  h1{font-size:1.3rem; margin:0;}
+  h1{font-size:1.15rem; margin:0; line-height:1.1;}
+  #perfilNombre{display:block; font-size:0.8rem; font-weight:400; opacity:0.75;}
+  .tools{display:flex; gap:6px;}
   .tools button{
-    font-size:0.95rem; padding:8px 12px; border-radius:14px; border:2px solid var(--border);
-    background:var(--card); color:var(--ink); cursor:pointer; margin-left:6px;
+    font-size:1.05rem; padding:8px 11px; border-radius:14px; border:2px solid var(--border);
+    background:var(--card); color:var(--ink); cursor:pointer; min-width:44px; min-height:44px;
   }
+  button:focus-visible, input:focus-visible, select:focus-visible{outline:3px solid #2F6FED; outline-offset:2px;}
 
   #sentence{
     margin:0 16px 10px; min-height:var(--panel-h); background:var(--card);
@@ -49,31 +55,58 @@
   .chip{
     display:flex; flex-direction:column; align-items:center; background:var(--bg);
     border-radius:14px; padding:6px 10px; font-size:0.85rem; border:2px solid var(--border);
+    color:var(--ink); font-family:inherit; cursor:pointer;
   }
   .chip span.emoji{font-size:1.6rem;}
+  .foto{width:56px; height:56px; object-fit:cover; border-radius:12px; display:block;}
+  .chip .foto{width:34px; height:34px; border-radius:8px;}
+  #core .foto, #sugs .foto{width:30px; height:30px; border-radius:8px;}
 
-  .actions{display:flex; gap:10px; margin:0 16px 12px;}
+  .actions{display:flex; gap:8px; margin:0 16px 10px;}
   .actions button{
-    flex:1; font-size:1.05rem; font-weight:700; padding:14px; border-radius:16px; border:none;
-    cursor:pointer; color:#1a1a1a;
+    font-size:1rem; font-weight:700; padding:14px 8px; border-radius:16px; border:none;
+    cursor:pointer; color:#1a1a1a; min-height:48px;
   }
-  #speak{background:#6FBF73; color:#123;}
-  #clear{background:var(--card); border:2px solid var(--border); color:var(--ink);}
+  #speak{background:#6FBF73; color:#123; flex:2;}
+  #undo, #clear, #saveFrase{background:var(--card); border:2px solid var(--border) !important; color:var(--ink); flex:1;}
+
+  #sugs{display:none; gap:8px; overflow-x:auto; padding:0 16px 10px; align-items:center;}
+  #sugs.show{display:flex;}
+  #sugs .etq{font-size:0.8rem; opacity:0.7; flex:0 0 auto;}
+  #sugs button{
+    flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:8px 12px; border-radius:999px;
+    border:2px dashed var(--ink); background:var(--card); color:var(--ink); font-weight:700; font-size:0.9rem; cursor:pointer; font-family:inherit;
+  }
+  #sugs .emoji{font-size:1.3rem;}
 
   #core{display:flex; gap:8px; overflow-x:auto; padding:0 16px 10px; -webkit-overflow-scrolling:touch;}
   #core button{
     flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:2px;
     padding:8px 12px; border-radius:14px; border:2px solid var(--border); background:var(--card);
-    color:var(--ink); font-weight:700; font-size:0.85rem; cursor:pointer;
+    color:var(--ink); font-weight:700; font-size:0.85rem; cursor:pointer; font-family:inherit;
   }
   #core .emoji{font-size:1.4rem;}
-  #history{padding:0 16px 6px; font-size:0.85rem; opacity:0.8; display:flex; gap:8px; overflow-x:auto;}
-  #history button{border:none; background:none; color:var(--ink); text-decoration:underline; cursor:pointer; font-size:0.85rem; flex:0 0 auto;}
+  #history{padding:0 16px 6px; font-size:0.85rem; opacity:0.8; display:flex; gap:8px; overflow-x:auto; align-items:center;}
+  #history button{border:none; background:none; color:var(--ink); text-decoration:underline; cursor:pointer; font-size:0.85rem; flex:0 0 auto; padding:8px 4px; font-family:inherit;}
+
+  #searchRow{padding:0 16px 8px;}
+  #buscar{
+    width:100%; font-size:1rem; padding:10px 14px; border-radius:14px; border:2px solid var(--border);
+    background:var(--card); color:var(--ink); font-family:inherit;
+  }
+
+  #bannerEdicion{
+    display:none; margin:0 16px 8px; padding:10px 12px; border-radius:14px; background:#FFE9A8; color:#3a2f00;
+    border:2px solid #E2B93B; font-size:0.9rem;
+  }
+  #bannerEdicion.show{display:block;}
+  #bannerEdicion .fila{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+  #bannerEdicion button{border:2px solid #3a2f00; background:#fff; color:#3a2f00; border-radius:10px; padding:8px 10px; cursor:pointer; font-weight:700; font-size:0.85rem; font-family:inherit;}
 
   nav{display:flex; gap:8px; overflow-x:auto; padding:0 16px 10px; -webkit-overflow-scrolling:touch;}
   nav button{
     flex:0 0 auto; padding:10px 16px; border-radius:999px; border:2px solid transparent;
-    font-size:1rem; font-weight:700; cursor:pointer; color:#1a1a1a; white-space:nowrap;
+    font-size:1rem; font-weight:700; cursor:pointer; color:#1a1a1a; white-space:nowrap; min-height:44px; font-family:inherit;
   }
   nav button.active{border-color:var(--ink);}
 
@@ -84,45 +117,202 @@
   .tile{
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
     border-radius:18px; border:3px solid rgba(0,0,0,0.15); padding:14px 8px; cursor:pointer;
-    color:#1a1a1a; font-weight:700; font-size:1rem; min-height:100px;
+    color:#1a1a1a; font-weight:700; font-size:1rem; min-height:100px; font-family:inherit;
   }
   .tile .emoji{font-size:2.4rem;}
   .tile:active{transform:scale(0.95);}
+  .tile.oculto{visibility:hidden;}      /* mantiene el lugar: la posicion de cada palabra no cambia */
+  .tile.apagada{opacity:0.3; filter:grayscale(1); border-style:dashed;}
+  .tile.ancho{grid-column:span 2;}
+  .vacio{grid-column:1/-1; opacity:0.7; padding:20px 4px;}
 
   :root[data-theme="alto"] .tile{color:#000; border-color:#FFF;}
   :root[data-theme="alto"] nav button{color:#000;}
 
   [data-size="grande"] .tile{font-size:1.2rem;}
   [data-size="grande"] .tile .emoji{font-size:3rem;}
+  [data-size="grande"] .foto{width:72px; height:72px;}
   [data-size="grande"] .chip{font-size:1rem;}
+
+  /* ventanas */
+  .modal{position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; z-index:50; padding:16px;}
+  .modal.show{display:flex;}
+  .box{background:var(--card); color:var(--ink); border-radius:20px; padding:18px; max-width:520px; width:100%; max-height:92vh; overflow-y:auto; border:3px solid var(--border);}
+  .box h2{margin:0 0 10px; font-size:1.2rem;}
+  .box h3{margin:14px 0 6px; font-size:1rem;}
+  .box label{display:block; margin:12px 0 4px; font-weight:700; font-size:0.95rem;}
+  .box select,.box input[type=text],.box input[type=password],.box input[type=tel]{
+    width:100%; font-size:1rem; padding:10px; border-radius:10px; border:2px solid var(--border); background:var(--bg); color:var(--ink); font-family:inherit;
+  }
+  .box input[type=range]{width:100%;}
+  .btn{border:2px solid var(--border); background:var(--bg); color:var(--ink); border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:700; font-size:0.95rem; margin:6px 6px 0 0; font-family:inherit;}
+  .btn.main{background:#6FBF73; color:#123; border-color:transparent;}
+  .btn.peligro{border-color:#C0392B; color:#C0392B;}
+  .box .nota{font-size:0.8rem; opacity:0.75; margin-top:4px;}
+  .box hr{border:none; border-top:2px solid var(--border); margin:16px 0;}
+  .check{display:flex; align-items:center; gap:10px; margin-top:12px; font-weight:700;}
+  .check input{width:22px; height:22px;}
+  .kpis{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin:8px 0;}
+  .kpi{background:var(--bg); border:2px solid var(--border); border-radius:12px; padding:8px 10px;}
+  .kpi b{display:block; font-size:1.4rem;}
+  .kpi span{font-size:0.8rem; opacity:0.75;}
+  .barras{display:flex; align-items:flex-end; gap:6px; height:90px; margin:8px 0 2px;}
+  .barras .col{flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%; font-size:0.75rem;}
+  .barras .col i{display:block; width:100%; background:#5B9BD5; border-radius:6px 6px 0 0; min-height:2px;}
+  .toprow{display:flex; align-items:center; gap:8px; font-size:0.9rem; margin:3px 0;}
+  .toprow .n{width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .toprow .b{flex:1; background:var(--bg); border-radius:6px; height:12px;}
+  .toprow .b i{display:block; height:100%; background:#6FBF73; border-radius:6px;}
+  .lista button{display:block; width:100%; text-align:left; background:var(--bg); border:2px solid var(--border); color:var(--ink); border-radius:10px; padding:8px 10px; margin:4px 0; cursor:pointer; font-family:inherit; font-size:0.9rem;}
+  .lista small{opacity:0.7; display:block;}
+  .sus-q{margin:10px 0; font-size:0.92rem;}
+  .sus-q .esc{display:flex; gap:6px; margin-top:4px;}
+  .sus-q .esc label{margin:0; font-weight:400; display:flex; flex-direction:column; align-items:center; flex:1; border:2px solid var(--border); border-radius:8px; padding:4px 0; cursor:pointer; background:var(--bg);}
+  .sus-q .esc input{margin:0;}
+  .sus-q .ext{display:flex; justify-content:space-between; font-size:0.7rem; opacity:0.7;}
+
+  .slots{display:flex; gap:12px; margin:10px 0;}
+  .slot{
+    flex:1; min-height:150px; border-radius:18px; border:4px dashed var(--border); background:var(--bg); color:var(--ink);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; cursor:pointer; font-family:inherit; font-weight:700; font-size:1.1rem; padding:8px;
+  }
+  .slot.activo{border-color:#2F6FED; border-style:solid;}
+  .slot .etq{font-size:0.9rem; opacity:0.8; text-transform:uppercase; letter-spacing:0.05em;}
+  .slot .emoji{font-size:3rem;}
+  .slot .foto{width:72px; height:72px;}
+  #plGrid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:8px; margin-top:10px;}
+  #plGrid .tile{min-height:80px; padding:8px 4px; font-size:0.85rem;}
+  #plGrid .tile .emoji{font-size:1.8rem;}
+  #plGrid .tile .foto{width:40px; height:40px;}
+
+  #aviso{
+    position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%);
+    background:#222; color:#fff; padding:10px 18px; border-radius:999px; font-size:0.95rem; z-index:99;
+    opacity:0; pointer-events:none; transition:opacity .2s; max-width:90vw; text-align:center;
+  }
+  #aviso.show{opacity:1;}
 </style>
 </head>
 <body data-size="normal">
 <header>
-  <h1>Mi Comunicador</h1>
+  <h1>Mi Comunicador<small id="perfilNombre"></small></h1>
   <div class="tools">
-    <button id="btnContrast" title="Alto contraste">◐ Contraste</button>
-    <button id="btnSize" title="Texto grande">🔎 Texto</button>
+    <button id="btnContrast" title="Alto contraste" aria-label="Alto contraste">🌓</button>
+    <button id="btnSize" title="Texto grande" aria-label="Texto grande">🔎</button>
+    <button id="btnPL" title="Primero - Luego" aria-label="Primero - Luego">📋</button>
+    <button id="btnAjustes" title="Ajustes (cuidador)" aria-label="Ajustes del cuidador">⚙️</button>
   </div>
 </header>
 
-<div id="sentence"><span class="placeholder">Toca los dibujos para armar una frase…</span></div>
+<div id="sentence" aria-live="polite"><span class="placeholder">Toca los dibujos para armar una frase…</span></div>
 
 <div class="actions">
   <button id="speak">🔊 Hablar frase</button>
-  <button id="undo">↩️ Deshacer</button>
-  <button id="clear">🗑️ Borrar</button>
+  <button id="undo" aria-label="Deshacer">↩️</button>
+  <button id="saveFrase" aria-label="Guardar frase" title="Guardar frase">⭐</button>
+  <button id="clear" aria-label="Borrar todo">🗑️</button>
 </div>
 
+<div id="sugs" aria-label="Palabras sugeridas"></div>
 <div id="core"></div>
 <div id="history"></div>
+<div id="searchRow"><input id="buscar" type="search" placeholder="🔍 Buscar una palabra…" autocomplete="off" aria-label="Buscar palabra"></div>
+<div id="bannerEdicion"></div>
 <nav id="tabs"></nav>
 <main><div class="grid" id="grid"></div></main>
 
+<!-- Ajustes -->
+<div class="modal" id="modalAjustes" role="dialog" aria-modal="true" aria-label="Ajustes">
+  <div class="box" id="boxAjustes"></div>
+</div>
+<!-- Paneles (estadisticas, SUS, respaldo, ayuda) -->
+<div class="modal" id="modalGen" role="dialog" aria-modal="true" aria-label="Panel">
+  <div class="box" id="boxGen"></div>
+</div>
+
+<!-- Primero - Luego -->
+<div class="modal" id="modalPL" role="dialog" aria-modal="true" aria-label="Primero y luego">
+  <div class="box">
+    <h2>📋 Primero – Luego</h2>
+    <div class="slots">
+      <button class="slot" id="slot0"></button>
+      <button class="slot" id="slot1"></button>
+    </div>
+    <label for="plCat">Elige una palabra para el cuadro marcado:</label>
+    <select id="plCat"></select>
+    <div class="grid" id="plGrid"></div>
+    <div style="margin-top:12px">
+      <button class="btn main" id="plHablar">🔊 Decir</button>
+      <button class="btn" id="plLimpiar">Limpiar</button>
+      <button class="btn" id="plCerrar">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="aviso" role="status"></div>
+
 <script>
+const VERSION = '2.0';
+
+/* ======================================================================
+   ALMACENAMIENTO  (todo queda solo en este dispositivo, en localStorage)
+   - LSG: datos globales (perfiles, PIN, evaluaciones)
+   - LS : datos del perfil activo (el perfil "1" conserva las claves de la
+          version anterior, asi no se pierde nada al actualizar)
+   ====================================================================== */
+const LSG = {
+  get(k, d){ try{ const v = localStorage.getItem('comunicador_'+k); return v===null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('comunicador_'+k, JSON.stringify(v)); return true; }catch(e){ return false; } },
+  del(k){ try{ localStorage.removeItem('comunicador_'+k); }catch(e){} }
+};
+let perfiles = LSG.get('perfiles', [{id:'1', nombre:'Principal'}]);
+if(!Array.isArray(perfiles) || perfiles.length===0) perfiles = [{id:'1', nombre:'Principal'}];
+let perfilId = String(LSG.get('perfilActivo', perfiles[0].id));
+if(!perfiles.some(p=>p.id===perfilId)) perfilId = perfiles[0].id;
+const prefijo = id => id==='1' ? '' : 'p'+id+'_';
+const LS = {
+  get(k, d){ return LSG.get(prefijo(perfilId)+k, d); },
+  set(k, v){ return LSG.set(prefijo(perfilId)+k, v); }
+};
+const CLAVES_PERFIL = ['mispalabras','historial','ocultas','frases','ajustes','primeroluego','uso','usoFrases','bigramas'];
+
+/* ---------- utilidades ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+const pad = n => String(n).padStart(2,'0');
+const fechaCorta = t => { const d = new Date(t); return pad(d.getDate())+'/'+pad(d.getMonth()+1)+' '+pad(d.getHours())+':'+pad(d.getMinutes()); };
+function icono(e){
+  return (typeof e==='string' && e.startsWith('data:image'))
+    ? `<img class="foto" src="${e}" alt="">`
+    : `<span class="emoji">${esc(e)}</span>`;
+}
+let avisoTimer;
+function mostrarAviso(msg){
+  const a = document.getElementById('aviso');
+  a.textContent = msg; a.classList.add('show');
+  clearTimeout(avisoTimer); avisoTimer = setTimeout(()=>a.classList.remove('show'), 2200);
+}
+function pulsacionLarga(el, fn){
+  el.addEventListener('contextmenu', ev=>{ ev.preventDefault(); fn(); });
+  let t;
+  el.addEventListener('touchstart', ()=>{ t = setTimeout(fn, 600); }, {passive:true});
+  ['touchend','touchmove','touchcancel'].forEach(n=> el.addEventListener(n, ()=> clearTimeout(t), {passive:true}));
+}
+function descargar(nombre, texto, tipo){
+  const blob = new Blob([texto], {type:tipo});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = nombre;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+const csvCelda = v => '"'+String(v).replace(/"/g,'""')+'"';
+
+/* ======================================================================
+   DATOS DEL VOCABULARIO
+   ====================================================================== */
 const categorias = [
   { id:'personas', nombre:'Personas', color:'var(--personas)', items:[
-    ['🧑','yo'],['👩','mamá'],['👨','papá'],['👧','amigo'],['👦','amiga'],['👶','bebé'],['👵','abuela'],['👴','abuelo'],
+    ['🧑','yo'],['👩','mamá'],['👨','papá'],['👦','amigo'],['👧','amiga'],['👶','bebé'],['👵','abuela'],['👴','abuelo'],
     ['👩‍⚕️','doctor'],['🧑‍🏫','maestro'],['👮','policía'],['👨‍👩‍👧','familia']
   ]},
   { id:'acciones', nombre:'Acciones', color:'var(--acciones)', items:[
@@ -154,32 +344,193 @@ const categorias = [
     ['❓','qué'],['📍','dónde'],['👤','quién'],['⏰','cuándo'],['❔','por qué'],['🔢','cuánto'],['🤔','cómo']
   ]},
   { id:'mis', nombre:'Mis palabras', color:'var(--misc)', items:[] },
+  { id:'frases', nombre:'⭐ Mis frases', color:'var(--frases)', items:[] },
 ];
+const catMis = categorias.find(c=>c.id==='mis');
+const catFrases = categorias.find(c=>c.id==='frases');
+const nucleo = [['💭','quiero'],['➕','más'],['🚫','no'],['✅','sí'],['🆘','ayuda'],['🛑','terminar'],['👀','mira'],
+  ['✋','para'],['⛔','detente'],['⏳','espera'],['👂','escucha'],['🤔','cómo'],['❓','qué']];
 
-let misPalabras = [];
-try{ misPalabras = JSON.parse(localStorage.getItem('comunicador_mispalabras')||'[]'); }catch(e){ misPalabras = []; }
-categorias.find(c=>c.id==='mis').items = misPalabras;
-function guardarMisPalabras(){
-  try{ localStorage.setItem('comunicador_mispalabras', JSON.stringify(misPalabras)); }catch(e){}
+/* ======================================================================
+   ESTADO DEL PERFIL ACTIVO
+   ====================================================================== */
+let misPalabras, frasesGuardadas, ocultas, ajustes, pl, historial, uso, usoFrases, bigramas;
+let plSlot = 0;
+let frase = [];
+let catActiva = 'personas';
+let modoEdicion = false;
+let desbloqueado = false;
+
+function cargarPerfil(){
+  misPalabras = LS.get('mispalabras', []);           catMis.items = misPalabras;
+  frasesGuardadas = LS.get('frases', []);            catFrases.items = frasesGuardadas;
+  ocultas = LS.get('ocultas', []);
+  ajustes = Object.assign({ voz:'', velocidad:0.9, hablarAlTocar:true, sugerencias:true }, LS.get('ajustes', {}));
+  pl = LS.get('primeroluego', [null, null]);
+  historial = LS.get('historial', []);
+  uso = LS.get('uso', []);                            // [[tiempo, palabra], ...]
+  usoFrases = LS.get('usoFrases', []);                // [[tiempo, texto, nPalabras], ...]
+  bigramas = LS.get('bigramas', {});                  // {palabraAnterior: {palabraSiguiente: veces}}
+  frase = []; plSlot = 0; catActiva = 'personas'; modoEdicion = false;
+  const b = document.getElementById('buscar'); if(b) b.value = '';
 }
-
-const nucleo = [['💭','quiero'],['➕','más'],['🚫','no'],['✅','sí'],['🆘','ayuda'],['🛑','terminar'],['👀','mira']];
+const guardarMisPalabras = () => LS.set('mispalabras', misPalabras);
+const guardarFrases = () => LS.set('frases', frasesGuardadas);
+const guardarAjustes = () => LS.set('ajustes', ajustes);
 
 const tabs = document.getElementById('tabs');
 const grid = document.getElementById('grid');
 const sentenceEl = document.getElementById('sentence');
 const coreEl = document.getElementById('core');
 const historyEl = document.getElementById('history');
-let frase = [];
-let historial = [];
-try{ historial = JSON.parse(localStorage.getItem('comunicador_historial')||'[]'); }catch(e){ historial = []; }
+const buscarEl = document.getElementById('buscar');
+const bannerEl = document.getElementById('bannerEdicion');
+const sugsEl = document.getElementById('sugs');
+
+/* ======================================================================
+   SEGURIDAD: PIN del cuidador (se guarda como huella SHA-256, no en claro)
+   ====================================================================== */
+async function hashPin(p){
+  try{
+    if(window.crypto && crypto.subtle){
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('comunicador-utesa:'+p));
+      return 'h:'+[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+  }catch(e){}
+  return 'p:'+p;
+}
+async function pinCorrecto(p){
+  const guardado = LSG.get('pin','');
+  return guardado !== '' && (guardado === await hashPin(p) || guardado === 'p:'+p);
+}
+async function pedirPin(){
+  if(!LSG.get('pin','')) return true;
+  const p = prompt('PIN del cuidador:');
+  if(p===null) return false;
+  if(await pinCorrecto(p)) return true;
+  mostrarAviso('PIN incorrecto'); return false;
+}
+
+/* ======================================================================
+   VOZ
+   ====================================================================== */
+let voces = [];
+function cargarVoces(){
+  try{ voces = (speechSynthesis.getVoices()||[]).filter(v=> v.lang && v.lang.toLowerCase().startsWith('es')); }catch(e){ voces = []; }
+}
+if('speechSynthesis' in window){ cargarVoces(); speechSynthesis.onvoiceschanged = cargarVoces; }
+function hablar(texto){
+  try{
+    const u = new SpeechSynthesisUtterance(texto);
+    const v = voces.find(x=> x.voiceURI===ajustes.voz);
+    if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
+    u.rate = ajustes.velocidad;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }catch(e){ console.error('voz no disponible', e); }
+}
+
+/* ======================================================================
+   USO, ESTADISTICAS Y PREDICCION DE PALABRAS (modelo de bigramas local)
+   ====================================================================== */
+let usoTimer;
+function guardarUsoDiferido(){ clearTimeout(usoTimer); usoTimer = setTimeout(guardarUsoYa, 1500); }
+function guardarUsoYa(){ clearTimeout(usoTimer); LS.set('uso', uso); }
+window.addEventListener('pagehide', guardarUsoYa);
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') guardarUsoYa(); });
+
+function registrarToque(palabra){
+  uso.push([Date.now(), palabra]);
+  if(uso.length > 5000) uso = uso.slice(-5000);
+  guardarUsoDiferido();
+}
+function aprender(palabras){
+  let prev = '^';
+  palabras.forEach(w=>{
+    bigramas[prev] = bigramas[prev] || {};
+    bigramas[prev][w] = (bigramas[prev][w]||0) + 1;
+    prev = w;
+  });
+  const claves = Object.keys(bigramas);
+  if(claves.length > 500){
+    claves.map(k=>[k, Object.values(bigramas[k]).reduce((a,b)=>a+b,0)])
+      .sort((a,b)=>a[1]-b[1]).slice(0, claves.length-400).forEach(([k])=> delete bigramas[k]);
+  }
+  LS.set('bigramas', bigramas);
+}
+function registrarFrase(palabras){
+  const texto = palabras.join(', ');
+  usoFrases.push([Date.now(), texto, palabras.length]);
+  if(usoFrases.length > 500) usoFrases = usoFrases.slice(-500);
+  LS.set('usoFrases', usoFrases);
+  aprender(palabras);
+  guardarHistorial(texto);
+}
+function buscarPalabra(palabra){
+  for(const [e,p] of nucleo){ if(p===palabra && !ocultas.includes('nucleo:'+p)) return {emoji:e}; }
+  for(const cat of categorias){
+    if(cat.id==='frases') continue;
+    for(const [e,p] of cat.items){ if(p===palabra && !ocultas.includes(cat.id+':'+p)) return {emoji:e}; }
+  }
+  return null;
+}
+function renderSugerencias(){
+  sugsEl.innerHTML = '';
+  if(!ajustes.sugerencias || modoEdicion){ sugsEl.classList.remove('show'); return; }
+  const ultimo = frase.length ? frase[frase.length-1].palabra : '^';
+  const cand = Object.entries(bigramas[ultimo] || {}).sort((a,b)=>b[1]-a[1]);
+  const lista = [];
+  for(const [w] of cand){
+    const hallada = buscarPalabra(w);
+    if(hallada) lista.push({emoji:hallada.emoji, palabra:w});
+    if(lista.length>=4) break;
+  }
+  if(lista.length===0){ sugsEl.classList.remove('show'); return; }
+  const l = document.createElement('span'); l.className = 'etq'; l.textContent = 'Sugerencias:';
+  sugsEl.appendChild(l);
+  lista.forEach(s=>{
+    const b = document.createElement('button');
+    b.innerHTML = icono(s.emoji)+`<span>${esc(s.palabra)}</span>`;
+    b.onclick = ()=> agregar(s.emoji, s.palabra);
+    sugsEl.appendChild(b);
+  });
+  sugsEl.classList.add('show');
+}
+
+/* ---------- palabras ocultas (modo cuidador) ---------- */
+const claveDe = (catId, palabra) => catId+':'+palabra;
+function toggleOculta(k){
+  ocultas = ocultas.includes(k) ? ocultas.filter(x=>x!==k) : [...ocultas, k];
+  LS.set('ocultas', ocultas);
+}
+
+/* ======================================================================
+   PANTALLA PRINCIPAL
+   ====================================================================== */
+function renderAll(){
+  renderPerfil(); renderCore(); renderHistory(); renderTabs(); renderBanner(); renderContenido(); renderSentence();
+}
+function renderPerfil(){
+  const el = document.getElementById('perfilNombre');
+  const p = perfiles.find(x=>x.id===perfilId);
+  el.textContent = perfiles.length>1 && p ? '👤 '+p.nombre : '';
+}
 
 function renderCore(){
   coreEl.innerHTML = '';
   nucleo.forEach(([emoji,palabra])=>{
+    const k = claveDe('nucleo', palabra);
+    const oculta = ocultas.includes(k);
     const b = document.createElement('button');
-    b.innerHTML = `<span class="emoji">${emoji}</span><span>${palabra}</span>`;
-    b.onclick = ()=> agregar(emoji, palabra);
+    b.innerHTML = icono(emoji)+`<span>${esc(palabra)}</span>`;
+    if(modoEdicion){
+      if(oculta) b.style.opacity = '0.3';
+      b.onclick = ()=>{ toggleOculta(k); renderCore(); };
+    } else if(oculta){
+      b.style.visibility = 'hidden'; b.disabled = true; b.tabIndex = -1;
+    } else {
+      b.onclick = ()=> agregar(emoji, palabra);
+    }
     coreEl.appendChild(b);
   });
 }
@@ -199,96 +550,215 @@ function renderHistory(){
 }
 function guardarHistorial(txt){
   historial = [txt, ...historial.filter(t=>t!==txt)].slice(0,5);
-  try{ localStorage.setItem('comunicador_historial', JSON.stringify(historial)); }catch(e){}
+  LS.set('historial', historial);
   renderHistory();
 }
 
-function renderTabs(activeId){
+function renderTabs(){
   tabs.innerHTML = '';
+  const buscando = buscarEl.value.trim() !== '';
   categorias.forEach(cat=>{
     const b = document.createElement('button');
     b.textContent = cat.nombre;
     b.style.background = cat.color;
-    b.className = cat.id===activeId ? 'active' : '';
-    b.onclick = ()=>{ renderTabs(cat.id); renderGrid(cat); };
+    b.className = (!buscando && cat.id===catActiva) ? 'active' : '';
+    b.onclick = ()=>{ buscarEl.value=''; catActiva = cat.id; renderTabs(); renderBanner(); renderContenido(); };
     tabs.appendChild(b);
   });
 }
 
+function renderBanner(){
+  bannerEl.classList.toggle('show', modoEdicion);
+  if(!modoEdicion){ bannerEl.innerHTML=''; return; }
+  bannerEl.innerHTML = `<b>✏️ Modo cuidador:</b> toca una palabra para ocultarla o mostrarla. Las ocultas dejan su lugar vacío para que las demás no cambien de posición.
+    <div class="fila">
+      <button id="edOcultar">Ocultar toda esta categoría</button>
+      <button id="edMostrar">Mostrar toda esta categoría</button>
+      <button id="edSalir">✔ Listo</button>
+    </div>`;
+  const cat = categorias.find(c=>c.id===catActiva);
+  const claves = (cat && cat.id!=='frases') ? cat.items.map(([e,p])=>claveDe(cat.id,p)) : [];
+  document.getElementById('edOcultar').onclick = ()=>{ ocultas = [...new Set([...ocultas, ...claves])]; LS.set('ocultas', ocultas); renderContenido(); };
+  document.getElementById('edMostrar').onclick = ()=>{ ocultas = ocultas.filter(k=>!claves.includes(k)); LS.set('ocultas', ocultas); renderContenido(); };
+  document.getElementById('edSalir').onclick = ()=>{ modoEdicion = false; renderAll(); mostrarAviso('Modo cuidador terminado'); };
+}
+
+function renderContenido(){
+  const q = norm(buscarEl.value);
+  if(q) return renderBusqueda(q);
+  renderGrid(categorias.find(c=>c.id===catActiva));
+}
+
+function crearTile(cat, emoji, palabra){
+  const t = document.createElement('button');
+  t.className = 'tile';
+  t.style.background = cat.color;
+  t.innerHTML = icono(emoji)+`<span>${esc(palabra)}</span>`;
+  const k = claveDe(cat.id, palabra);
+  const oculta = ocultas.includes(k);
+  if(modoEdicion){
+    if(oculta) t.classList.add('apagada');
+    t.onclick = ()=>{ toggleOculta(k); renderContenido(); };
+  } else if(oculta){
+    t.classList.add('oculto'); t.disabled = true; t.tabIndex = -1; t.setAttribute('aria-hidden','true');
+  } else {
+    t.onclick = ()=> agregar(emoji, palabra);
+  }
+  return t;
+}
+
+function renderBusqueda(q){
+  grid.innerHTML = '';
+  let n = 0;
+  categorias.forEach(cat=>{
+    if(cat.id==='frases') return;
+    cat.items.forEach(([emoji,palabra])=>{
+      if(!norm(palabra).includes(q)) return;
+      if(!modoEdicion && ocultas.includes(claveDe(cat.id,palabra))) return;
+      grid.appendChild(crearTile(cat, emoji, palabra)); n++;
+    });
+  });
+  if(n===0){ const d = document.createElement('div'); d.className='vacio'; d.textContent='No hay palabras con ese nombre. Puedes crearla en “Mis palabras”.'; grid.appendChild(d); }
+  renderTabs();
+}
+
 function renderGrid(cat){
   grid.innerHTML = '';
-  if(cat.id==='mis'){
-    const form = document.createElement('div');
-    form.style.cssText='display:flex; gap:6px; margin-bottom:12px; grid-column:1/-1;';
-    form.innerHTML = `<input id="nuevoEmoji" placeholder="😀" style="width:54px; font-size:1.4rem; text-align:center; border-radius:10px; border:2px solid var(--border); padding:6px;">
-      <input id="nuevaPalabra" placeholder="Escribe una palabra" style="flex:1; font-size:1rem; border-radius:10px; border:2px solid var(--border); padding:6px 10px;">
-      <button id="btnAgregarPalabra" style="border:none; border-radius:10px; background:var(--acciones); padding:6px 14px; font-weight:700; cursor:pointer;">➕</button>`;
-    grid.appendChild(form);
-    document.getElementById('btnAgregarPalabra').onclick = ()=>{
-      const e = document.getElementById('nuevoEmoji').value.trim() || '💬';
-      const w = document.getElementById('nuevaPalabra').value.trim();
-      if(!w) return;
-      misPalabras.push([e,w]);
-      guardarMisPalabras();
-      renderGrid(cat);
-    };
-  }
+  if(cat.id==='frases') return renderFrases(cat);
+  if(cat.id==='mis') renderFormMis(cat);
   cat.items.forEach(([emoji,palabra],idx)=>{
-    const t = document.createElement('button');
-    t.className='tile';
-    t.style.background = cat.color;
-    t.innerHTML = `<span class="emoji">${emoji}</span><span>${palabra}</span>`;
-    t.onclick = ()=> agregar(emoji, palabra);
+    const t = crearTile(cat, emoji, palabra);
     if(cat.id==='mis'){
-      t.oncontextmenu = (ev)=>{ ev.preventDefault(); if(confirm('¿Borrar "'+palabra+'"?')){ misPalabras.splice(idx,1); guardarMisPalabras(); renderGrid(cat); } };
       t.title = 'Mantén presionado (o clic derecho) para borrar';
-      let presionado;
-      t.addEventListener('touchstart', ()=>{ presionado = setTimeout(()=>{ if(confirm('¿Borrar "'+palabra+'"?')){ misPalabras.splice(idx,1); guardarMisPalabras(); renderGrid(cat); } }, 600); });
-      t.addEventListener('touchend', ()=> clearTimeout(presionado));
+      pulsacionLarga(t, ()=>{ if(confirm('¿Borrar "'+palabra+'"?')){ misPalabras.splice(idx,1); guardarMisPalabras(); renderGrid(cat); } });
     }
+    grid.appendChild(t);
+  });
+  if(cat.id==='mis' && cat.items.length===0){
+    const d = document.createElement('div'); d.className='vacio';
+    d.textContent='Aún no hay palabras propias. Agrega una con un dibujo o con una foto (📷) de su mundo: su juguete, su casa, su familia.';
+    grid.appendChild(d);
+  }
+}
+
+let fotoTemp = null;
+function renderFormMis(cat){
+  fotoTemp = null;
+  const form = document.createElement('div');
+  form.style.cssText = 'display:flex; gap:6px; margin-bottom:12px; grid-column:1/-1; align-items:center; flex-wrap:wrap;';
+  form.innerHTML = `<input id="nuevoEmoji" placeholder="😀" aria-label="Emoji" style="width:54px; font-size:1.4rem; text-align:center; border-radius:10px; border:2px solid var(--border); padding:6px; background:var(--card); color:var(--ink);">
+    <button id="btnFoto" type="button" aria-label="Usar una foto" title="Usar una foto" style="border:2px solid var(--border); border-radius:10px; background:var(--card); font-size:1.3rem; padding:6px 10px; cursor:pointer;">📷</button>
+    <img id="prevFoto" class="foto" alt="" style="display:none; width:40px; height:40px;">
+    <input id="nuevaPalabra" placeholder="Escribe una palabra" aria-label="Palabra" style="flex:1; min-width:120px; font-size:1rem; border-radius:10px; border:2px solid var(--border); padding:8px 10px; background:var(--card); color:var(--ink);">
+    <button id="btnAgregarPalabra" type="button" aria-label="Agregar" style="border:none; border-radius:10px; background:var(--acciones); padding:8px 14px; font-weight:700; cursor:pointer; font-size:1.1rem;">➕</button>
+    <input id="archivoFoto" type="file" accept="image/*" style="display:none;">`;
+  grid.appendChild(form);
+
+  const archivo = document.getElementById('archivoFoto');
+  document.getElementById('btnFoto').onclick = ()=> archivo.click();
+  archivo.onchange = ()=>{
+    const f = archivo.files && archivo.files[0];
+    if(!f) return;
+    redimensionar(f, url=>{
+      fotoTemp = url;
+      const p = document.getElementById('prevFoto'); p.src = url; p.style.display = 'block';
+      document.getElementById('nuevoEmoji').value = '';
+    });
+  };
+  document.getElementById('btnAgregarPalabra').onclick = ()=>{
+    const w = document.getElementById('nuevaPalabra').value.trim();
+    if(!w){ mostrarAviso('Escribe la palabra'); return; }
+    const e = fotoTemp || document.getElementById('nuevoEmoji').value.trim() || '💬';
+    misPalabras.push([e,w]);
+    if(!guardarMisPalabras()){
+      misPalabras.pop();
+      alert('No hay espacio para guardar más fotos en este dispositivo. Borra alguna palabra con foto e inténtalo otra vez.');
+      return;
+    }
+    renderGrid(cat);
+  };
+}
+
+function redimensionar(file, cb){
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = ()=>{
+    const s = 160, c = document.createElement('canvas');
+    c.width = c.height = s;
+    const m = Math.min(img.width, img.height);
+    c.getContext('2d').drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, s, s);
+    URL.revokeObjectURL(url);
+    cb(c.toDataURL('image/jpeg', 0.75));
+  };
+  img.onerror = ()=>{ URL.revokeObjectURL(url); alert('No se pudo leer la imagen.'); };
+  img.src = url;
+}
+
+function renderFrases(cat){
+  if(cat.items.length===0){
+    const d = document.createElement('div'); d.className='vacio';
+    d.textContent='Arma una frase arriba y toca ⭐ para guardarla aquí. Así las frases que más se usan quedan a un toque.';
+    grid.appendChild(d);
+    return;
+  }
+  cat.items.forEach((f, idx)=>{
+    const palabras = f.map(x=>x.palabra);
+    const texto = palabras.join(', ');
+    const t = document.createElement('button');
+    t.className = 'tile ancho';
+    t.style.background = cat.color;
+    t.innerHTML = `<span class="emoji">⭐</span><span>${esc(texto)}</span>`;
+    t.title = 'Mantén presionado (o clic derecho) para borrar';
+    t.onclick = ()=>{ frase = f.map(x=>({...x})); renderSentence(); hablar(texto); registrarFrase(palabras); };
+    pulsacionLarga(t, ()=>{ if(confirm('¿Borrar esta frase?')){ cat.items.splice(idx,1); guardarFrases(); renderGrid(cat); } });
     grid.appendChild(t);
   });
 }
 
+/* ---------- frase ---------- */
 function agregar(emoji, palabra){
   frase.push({emoji, palabra});
+  registrarToque(palabra);
   renderSentence();
-  hablar(palabra);
+  if(ajustes.hablarAlTocar) hablar(palabra);
 }
 
 function renderSentence(){
   if(frase.length===0){
     sentenceEl.innerHTML = '<span class="placeholder">Toca los dibujos para armar una frase…</span>';
-    return;
+  } else {
+    sentenceEl.innerHTML = '';
+    frase.forEach((f,i)=>{
+      const chip = document.createElement('button');
+      chip.className = 'chip';
+      chip.setAttribute('aria-label', 'Quitar '+f.palabra);
+      chip.innerHTML = icono(f.emoji)+`<span>${esc(f.palabra)}</span>`;
+      chip.onclick = ()=>{ frase.splice(i,1); renderSentence(); };
+      sentenceEl.appendChild(chip);
+    });
   }
-  sentenceEl.innerHTML = '';
-  frase.forEach((f,i)=>{
-    const chip = document.createElement('div');
-    chip.className='chip';
-    chip.innerHTML = `<span class="emoji">${f.emoji}</span><span>${f.palabra}</span>`;
-    chip.onclick = ()=>{ frase.splice(i,1); renderSentence(); };
-    sentenceEl.appendChild(chip);
-  });
-}
-
-function hablar(texto){
-  try{
-    const u = new SpeechSynthesisUtterance(texto);
-    u.lang = 'es-ES';
-    u.rate = 0.9;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(u);
-  }catch(e){ console.error('voz no disponible', e); }
+  renderSugerencias();
 }
 
 document.getElementById('speak').onclick = ()=>{
   if(frase.length===0) return;
-  const texto = frase.map(f=>f.palabra).join(', ');
-  hablar(texto);
-  guardarHistorial(texto);
+  const palabras = frase.map(f=>f.palabra);
+  hablar(palabras.join(', '));
+  registrarFrase(palabras);
 };
 document.getElementById('undo').onclick = ()=>{ frase.pop(); renderSentence(); };
 document.getElementById('clear').onclick = ()=>{ frase=[]; renderSentence(); };
+document.getElementById('saveFrase').onclick = ()=>{
+  if(frase.length===0){ mostrarAviso('Primero arma una frase'); return; }
+  const texto = frase.map(f=>f.palabra).join(', ');
+  if(frasesGuardadas.some(f=>f.map(x=>x.palabra).join(', ')===texto)){ mostrarAviso('Esa frase ya está guardada'); return; }
+  frasesGuardadas.push(frase.map(x=>({...x})));
+  if(!guardarFrases()){ frasesGuardadas.pop(); mostrarAviso('No se pudo guardar'); return; }
+  mostrarAviso('⭐ Frase guardada');
+  if(catActiva==='frases' && !buscarEl.value) renderContenido();
+};
+
+buscarEl.addEventListener('input', ()=>{ renderContenido(); renderTabs(); });
 
 document.getElementById('btnContrast').onclick = ()=>{
   const root = document.documentElement;
@@ -299,10 +769,432 @@ document.getElementById('btnSize').onclick = ()=>{
   b.dataset.size = b.dataset.size==='normal' ? 'grande' : 'normal';
 };
 
-renderTabs('personas');
-renderGrid(categorias[0]);
-renderCore();
-renderHistory();
+/* ======================================================================
+   VENTANAS
+   ====================================================================== */
+function abrir(id){ document.getElementById(id).classList.add('show'); }
+function cerrar(id){ document.getElementById(id).classList.remove('show'); }
+['modalAjustes','modalPL','modalGen'].forEach(id=>{
+  document.getElementById(id).addEventListener('click', ev=>{ if(ev.target.id===id) cerrar(id); });
+});
+document.addEventListener('keydown', ev=>{ if(ev.key==='Escape'){ cerrar('modalAjustes'); cerrar('modalPL'); cerrar('modalGen'); } });
+
+function panel(titulo, html, init){
+  const box = document.getElementById('boxGen');
+  box.innerHTML = `<h2>${titulo}</h2>${html}
+    <div style="margin-top:14px">
+      <button class="btn" id="genVolver">← Ajustes</button>
+      <button class="btn main" id="genCerrar" style="float:right">Cerrar</button><div style="clear:both"></div>
+    </div>`;
+  document.getElementById('genVolver').onclick = ()=>{ cerrar('modalGen'); construirAjustes(); abrir('modalAjustes'); };
+  document.getElementById('genCerrar').onclick = ()=> cerrar('modalGen');
+  cerrar('modalAjustes'); abrir('modalGen');
+  if(init) init(box);
+}
+
+/* ======================================================================
+   AJUSTES DEL CUIDADOR
+   ====================================================================== */
+let instalarEvt = null;
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); instalarEvt = e; });
+
+document.getElementById('btnAjustes').onclick = async ()=>{
+  if(LSG.get('pin','') && !desbloqueado){
+    if(!(await pedirPin())) return;
+    desbloqueado = true;
+  }
+  construirAjustes();
+  abrir('modalAjustes');
+};
+
+function construirAjustes(){
+  cargarVoces();
+  const box = document.getElementById('boxAjustes');
+  const opcVoces = ['<option value="">Automática</option>']
+    .concat(voces.map(v=>`<option value="${esc(v.voiceURI)}" ${v.voiceURI===ajustes.voz?'selected':''}>${esc(v.name)} (${esc(v.lang)})</option>`)).join('');
+  const opcPerfiles = perfiles.map(p=>`<option value="${esc(p.id)}" ${p.id===perfilId?'selected':''}>${esc(p.nombre)}</option>`).join('');
+  const tienePin = !!LSG.get('pin','');
+  box.innerHTML = `
+    <h2>⚙️ Ajustes del cuidador</h2>
+
+    <h3>👤 Perfil de la persona</h3>
+    <select id="ajPerfil" aria-label="Perfil">${opcPerfiles}</select>
+    <button class="btn" id="ajNuevoPerfil">➕ Nuevo perfil</button>
+    <button class="btn" id="ajRenombrar">✏️ Cambiar nombre</button>
+    <button class="btn peligro" id="ajBorrarPerfil" ${perfiles.length<2?'disabled':''}>Borrar perfil</button>
+    <div class="nota">Cada perfil tiene sus propias palabras, fotos, frases, voz y estadísticas.</div>
+
+    <hr>
+    <h3>🔊 Voz</h3>
+    <select id="ajVoz" aria-label="Voz">${opcVoces}</select>
+    ${voces.length===0 ? '<div class="nota">Este dispositivo no mostró voces en español para elegir; se usará la voz predeterminada.</div>' : ''}
+    <label for="ajVel">Velocidad: <span id="ajVelTxt">${ajustes.velocidad.toFixed(1)}</span></label>
+    <input id="ajVel" type="range" min="0.5" max="1.2" step="0.1" value="${ajustes.velocidad}">
+    <button class="btn" id="ajProbar">🔊 Probar voz</button>
+    <label class="check"><input type="checkbox" id="ajTocar" ${ajustes.hablarAlTocar?'checked':''}> Decir cada palabra al tocarla</label>
+    <div class="nota">Hablar al instante enseña que tocar un dibujo produce una palabra. Apágalo si prefieres que solo hable al pulsar “Hablar frase”.</div>
+    <label class="check"><input type="checkbox" id="ajSug" ${ajustes.sugerencias?'checked':''}> Mostrar sugerencias de palabras</label>
+    <div class="nota">La app aprende de las frases que se dicen y sugiere la palabra que suele venir después. Todo se calcula en este dispositivo.</div>
+
+    <hr>
+    <h3>👁 Palabras visibles</h3>
+    <div class="nota">Oculta palabras que todavía no se enseñan para reducir distracciones. Dejan su lugar vacío, así las demás no cambian de posición.</div>
+    <button class="btn main" id="ajEditar">✏️ Elegir palabras visibles</button>
+    <button class="btn" id="ajReset">Mostrar todas</button>
+
+    <hr>
+    <h3>🧰 Herramientas</h3>
+    <button class="btn" id="ajStats">📊 Estadísticas e historial</button>
+    <button class="btn" id="ajSus">📝 Evaluación de usabilidad</button>
+    <button class="btn" id="ajBackup">💾 Copia de seguridad</button>
+    <button class="btn" id="ajAyuda">❓ Ayuda y créditos</button>
+    <button class="btn" id="ajInstalar">📲 Instalar como app</button>
+
+    <hr>
+    <h3>🔒 PIN del cuidador</h3>
+    <input id="ajPin" type="tel" inputmode="numeric" maxlength="4" placeholder="${tienePin ? '•••• (ya hay un PIN)' : '4 números'}" aria-label="PIN">
+    <button class="btn" id="ajGuardarPin">Guardar PIN</button>
+    <button class="btn" id="ajQuitarPin">Quitar PIN</button>
+    <div class="nota">Evita que se cambien los ajustes por accidente. El PIN se guarda cifrado con una huella (SHA-256) y no es una protección fuerte contra un experto.</div>
+
+    <hr>
+    <button class="btn peligro" id="ajBorrarHist">Borrar recientes</button>
+    <button class="btn main" id="ajCerrar" style="float:right">Cerrar</button>
+    <div style="clear:both"></div>`;
+
+  document.getElementById('ajPerfil').onchange = e=> cambiarPerfil(e.target.value);
+  document.getElementById('ajNuevoPerfil').onclick = ()=>{
+    const n = (prompt('Nombre del nuevo perfil:')||'').trim();
+    if(!n) return;
+    const id = String(Math.max(...perfiles.map(p=>parseInt(p.id,10)||0)) + 1);
+    perfiles.push({id, nombre:n.slice(0,24)});
+    LSG.set('perfiles', perfiles);
+    cambiarPerfil(id);
+  };
+  document.getElementById('ajRenombrar').onclick = ()=>{
+    const p = perfiles.find(x=>x.id===perfilId);
+    const n = (prompt('Nuevo nombre:', p.nombre)||'').trim();
+    if(!n) return;
+    p.nombre = n.slice(0,24); LSG.set('perfiles', perfiles); renderPerfil(); construirAjustes();
+  };
+  document.getElementById('ajBorrarPerfil').onclick = ()=>{
+    if(perfiles.length<2) return;
+    const p = perfiles.find(x=>x.id===perfilId);
+    if(!confirm('¿Borrar el perfil "'+p.nombre+'" con todas sus palabras, fotos y estadísticas? No se puede deshacer.')) return;
+    CLAVES_PERFIL.forEach(k=> LSG.del(prefijo(perfilId)+k));
+    perfiles = perfiles.filter(x=>x.id!==perfilId);
+    LSG.set('perfiles', perfiles);
+    cambiarPerfil(perfiles[0].id);
+  };
+  document.getElementById('ajVoz').onchange = e=>{ ajustes.voz = e.target.value; guardarAjustes(); };
+  document.getElementById('ajVel').oninput = e=>{
+    ajustes.velocidad = parseFloat(e.target.value);
+    document.getElementById('ajVelTxt').textContent = ajustes.velocidad.toFixed(1);
+    guardarAjustes();
+  };
+  document.getElementById('ajProbar').onclick = ()=> hablar('Hola, esta es mi voz');
+  document.getElementById('ajTocar').onchange = e=>{ ajustes.hablarAlTocar = e.target.checked; guardarAjustes(); };
+  document.getElementById('ajSug').onchange = e=>{ ajustes.sugerencias = e.target.checked; guardarAjustes(); renderSugerencias(); };
+  document.getElementById('ajEditar').onclick = ()=>{
+    modoEdicion = true; cerrar('modalAjustes'); renderAll();
+    mostrarAviso('Toca las palabras para ocultarlas o mostrarlas');
+  };
+  document.getElementById('ajReset').onclick = ()=>{ ocultas = []; LS.set('ocultas', ocultas); renderAll(); mostrarAviso('Todas las palabras visibles'); };
+  document.getElementById('ajStats').onclick = abrirStats;
+  document.getElementById('ajSus').onclick = abrirSus;
+  document.getElementById('ajBackup').onclick = abrirBackup;
+  document.getElementById('ajAyuda').onclick = abrirAyuda;
+  document.getElementById('ajInstalar').onclick = async ()=>{
+    if(instalarEvt){ instalarEvt.prompt(); try{ await instalarEvt.userChoice; }catch(e){} instalarEvt = null; }
+    else if(window.matchMedia && matchMedia('(display-mode: standalone)').matches){ mostrarAviso('Ya está instalada como app'); }
+    else { alert('Para instalarla:\n\n• Android (Chrome): menú ⋮ → “Instalar aplicación” o “Añadir a pantalla de inicio”.\n• iPhone (Safari): botón Compartir → “Añadir a pantalla de inicio”.\n\nTiene que estar abierta desde su enlace web (no desde un archivo).'); }
+  };
+  document.getElementById('ajGuardarPin').onclick = async ()=>{
+    const v = document.getElementById('ajPin').value.trim();
+    if(!/^\d{4}$/.test(v)){ mostrarAviso('El PIN son 4 números'); return; }
+    LSG.set('pin', await hashPin(v)); desbloqueado = true; mostrarAviso('PIN guardado'); construirAjustes();
+  };
+  document.getElementById('ajQuitarPin').onclick = ()=>{ LSG.del('pin'); mostrarAviso('PIN quitado'); construirAjustes(); };
+  document.getElementById('ajBorrarHist').onclick = ()=>{ historial = []; LS.set('historial', historial); renderHistory(); mostrarAviso('Recientes borrados'); };
+  document.getElementById('ajCerrar').onclick = ()=> cerrar('modalAjustes');
+}
+
+function cambiarPerfil(id){
+  guardarUsoYa();
+  perfilId = id; LSG.set('perfilActivo', id);
+  cargarPerfil(); renderAll();
+  cerrar('modalAjustes'); cerrar('modalGen');
+  const p = perfiles.find(x=>x.id===id);
+  mostrarAviso('Perfil: '+(p?p.nombre:''));
+}
+
+/* ======================================================================
+   ESTADISTICAS E HISTORIAL
+   ====================================================================== */
+function abrirStats(){
+  guardarUsoYa();
+  const ini = new Date(); ini.setHours(0,0,0,0);
+  const t0 = ini.getTime(), DIA = 86400000;
+  const hoy = uso.filter(u=>u[0]>=t0).length;
+  const dias = [];
+  for(let i=6;i>=0;i--){
+    const d0 = t0 - i*DIA;
+    dias.push({d:new Date(d0), n: uso.filter(u=>u[0]>=d0 && u[0]<d0+DIA).length});
+  }
+  const maxDia = Math.max(1, ...dias.map(x=>x.n));
+  const conteo = {};
+  uso.forEach(u=>{ conteo[u[1]] = (conteo[u[1]]||0)+1; });
+  const top = Object.entries(conteo).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const maxTop = top.length ? top[0][1] : 1;
+  const prom = usoFrases.length ? (usoFrases.reduce((s,f)=>s+f[2],0)/usoFrases.length).toFixed(1) : '0';
+  const letras = ['D','L','M','M','J','V','S'];
+  const ultimas = usoFrases.slice(-15).reverse();
+
+  panel('📊 Estadísticas e historial', `
+    <div class="nota">Perfil: <b>${esc((perfiles.find(p=>p.id===perfilId)||{}).nombre||'')}</b>. Los datos se guardan solo en este dispositivo.</div>
+    <div class="kpis">
+      <div class="kpi"><b>${uso.length}</b><span>palabras tocadas</span></div>
+      <div class="kpi"><b>${hoy}</b><span>palabras hoy</span></div>
+      <div class="kpi"><b>${usoFrases.length}</b><span>frases dichas</span></div>
+      <div class="kpi"><b>${prom}</b><span>palabras por frase (promedio)</span></div>
+      <div class="kpi"><b>${Object.keys(conteo).length}</b><span>palabras distintas usadas</span></div>
+    </div>
+    <h3>Últimos 7 días</h3>
+    <div class="barras">${dias.map(x=>`<div class="col" title="${x.n}"><i style="height:${Math.round(x.n/maxDia*100)}%"></i></div>`).join('')}</div>
+    <div class="barras" style="height:auto; margin:0">${dias.map(x=>`<div class="col" style="height:auto">${letras[x.d.getDay()]}<br>${x.n}</div>`).join('')}</div>
+    <h3>Palabras más usadas</h3>
+    ${top.length ? top.map(([w,n])=>`<div class="toprow"><span class="n">${esc(w)}</span><span class="b"><i style="width:${Math.round(n/maxTop*100)}%"></i></span><span>${n}</span></div>`).join('') : '<div class="nota">Todavía no hay datos.</div>'}
+    <h3>Historial de frases (toca para repetir)</h3>
+    <div class="lista">${ultimas.length ? ultimas.map((f,i)=>`<button data-i="${i}"><small>${fechaCorta(f[0])}</small>${esc(f[1])}</button>`).join('') : '<div class="nota">Todavía no hay frases.</div>'}</div>
+    <hr>
+    <button class="btn" id="stCsv">⬇️ Exportar a CSV (Excel)</button>
+    <button class="btn peligro" id="stBorrar">Borrar estadísticas</button>`,
+  box=>{
+    box.querySelectorAll('.lista button').forEach(b=> b.onclick = ()=> hablar(ultimas[+b.dataset.i][1]));
+    box.querySelector('#stCsv').onclick = ()=>{
+      const filas = [['fecha_hora','tipo','contenido','num_palabras']];
+      const iso = t=>{ const d=new Date(t); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds()); };
+      uso.forEach(u=> filas.push([iso(u[0]),'palabra',u[1],1]));
+      usoFrases.forEach(f=> filas.push([iso(f[0]),'frase',f[1],f[2]]));
+      filas.sort((a,b)=> a[0]<b[0]?-1:a[0]>b[0]?1:0);
+      descargar('estadisticas-comunicador.csv', '﻿'+filas.map(r=>r.map(csvCelda).join(',')).join('\r\n'), 'text/csv;charset=utf-8');
+    };
+    box.querySelector('#stBorrar').onclick = ()=>{
+      if(!confirm('¿Borrar todas las estadísticas y el historial de este perfil? (Las palabras y frases guardadas no se borran)')) return;
+      uso = []; usoFrases = []; bigramas = {};
+      LS.set('uso', uso); LS.set('usoFrases', usoFrases); LS.set('bigramas', bigramas);
+      renderSugerencias(); abrirStats();
+    };
+  });
+}
+
+/* ======================================================================
+   EVALUACION DE USABILIDAD (escala SUS, 10 preguntas)
+   ====================================================================== */
+const SUS = [
+  'Creo que me gustaría usar este sistema con frecuencia.',
+  'Encontré el sistema innecesariamente complejo.',
+  'Pensé que el sistema era fácil de usar.',
+  'Creo que necesitaría el apoyo de un técnico para poder usar este sistema.',
+  'Encontré que las diversas funciones del sistema estaban bien integradas.',
+  'Pensé que había demasiada inconsistencia en este sistema.',
+  'Imagino que la mayoría de las personas aprenderían a usar este sistema rápidamente.',
+  'Encontré el sistema muy incómodo de usar.',
+  'Me sentí muy seguro/a usando el sistema.',
+  'Necesité aprender muchas cosas antes de poder usar el sistema.'
+];
+function puntajeSus(resp){
+  let s = 0;
+  resp.forEach((v,i)=>{ s += (i%2===0) ? (v-1) : (5-v); });
+  return Math.round(s*2.5*10)/10;
+}
+function abrirSus(){
+  const lista = LSG.get('sus', []);
+  const prom = lista.length ? (lista.reduce((s,x)=>s+x.puntaje,0)/lista.length).toFixed(1) : null;
+  panel('📝 Evaluación de usabilidad (SUS)', `
+    <div class="nota">Para que cuidadores, terapeutas o docentes califiquen la app después de probarla. Responde de 1 (muy en desacuerdo) a 5 (muy de acuerdo). Un puntaje de 68 o más se considera por encima del promedio.</div>
+    <label for="susNombre">Nombre de quien evalúa</label>
+    <input id="susNombre" type="text" maxlength="40">
+    <label for="susRol">Rol</label>
+    <select id="susRol"><option>Familiar o cuidador</option><option>Terapeuta o docente</option><option>Otro</option></select>
+    ${SUS.map((q,i)=>`<div class="sus-q"><b>${i+1}.</b> ${esc(q)}
+      <div class="esc">${[1,2,3,4,5].map(v=>`<label><input type="radio" name="sus${i}" value="${v}">${v}</label>`).join('')}</div>
+      <div class="ext"><span>Muy en desacuerdo</span><span>Muy de acuerdo</span></div></div>`).join('')}
+    <button class="btn main" id="susGuardar">Guardar evaluación</button>
+    <hr>
+    <h3>Resultados guardados</h3>
+    ${lista.length ? `<div class="kpis"><div class="kpi"><b>${lista.length}</b><span>evaluaciones</span></div><div class="kpi"><b>${prom}</b><span>puntaje SUS promedio</span></div></div>
+      <div class="lista">${lista.map(x=>`<div style="padding:4px 0; font-size:0.9rem"><b>${x.puntaje}</b> — ${esc(x.nombre||'Anónimo')} (${esc(x.rol)}) <small>${fechaCorta(x.t)}</small></div>`).join('')}</div>
+      <button class="btn" id="susCsv">⬇️ Exportar a CSV</button>
+      <button class="btn peligro" id="susBorrar">Borrar evaluaciones</button>` : '<div class="nota">Aún no hay evaluaciones.</div>'}`,
+  box=>{
+    box.querySelector('#susGuardar').onclick = ()=>{
+      const resp = [];
+      for(let i=0;i<10;i++){
+        const r = box.querySelector('input[name="sus'+i+'"]:checked');
+        if(!r){ mostrarAviso('Falta responder la pregunta '+(i+1)); return; }
+        resp.push(parseInt(r.value,10));
+      }
+      const reg = { t:Date.now(), nombre:box.querySelector('#susNombre').value.trim(), rol:box.querySelector('#susRol').value, resp, puntaje:puntajeSus(resp) };
+      lista.push(reg); LSG.set('sus', lista);
+      mostrarAviso('Guardada. Puntaje SUS: '+reg.puntaje);
+      abrirSus();
+    };
+    const csv = box.querySelector('#susCsv');
+    if(csv) csv.onclick = ()=>{
+      const filas = [['fecha','nombre','rol',...SUS.map((_,i)=>'P'+(i+1)),'puntaje_SUS']];
+      lista.forEach(x=>{ const d=new Date(x.t); filas.push([d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()), x.nombre, x.rol, ...x.resp, x.puntaje]); });
+      descargar('evaluacion-sus.csv', '﻿'+filas.map(r=>r.map(csvCelda).join(',')).join('\r\n'), 'text/csv;charset=utf-8');
+    };
+    const del = box.querySelector('#susBorrar');
+    if(del) del.onclick = ()=>{ if(confirm('¿Borrar todas las evaluaciones?')){ LSG.del('sus'); abrirSus(); } };
+  });
+}
+
+/* ======================================================================
+   COPIA DE SEGURIDAD
+   ====================================================================== */
+function abrirBackup(){
+  panel('💾 Copia de seguridad', `
+    <div class="nota">Guarda todo (perfiles, palabras, fotos, frases, estadísticas y ajustes) en un archivo, para pasarlo a otro dispositivo o no perderlo si se borran los datos del navegador.</div>
+    <button class="btn main" id="bkExportar">⬇️ Guardar copia (archivo)</button>
+    <button class="btn" id="bkImportar">⬆️ Restaurar desde un archivo</button>
+    <input id="bkArchivo" type="file" accept=".json,application/json" style="display:none">
+    <div class="nota">Al restaurar, se reemplazan los datos actuales de este dispositivo.</div>`,
+  box=>{
+    box.querySelector('#bkExportar').onclick = ()=>{
+      guardarUsoYa();
+      const datos = {};
+      for(let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if(k && k.startsWith('comunicador_')) datos[k] = localStorage.getItem(k);
+      }
+      const d = new Date();
+      const nombre = 'copia-comunicador-'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'.json';
+      descargar(nombre, JSON.stringify({app:'comunicador', version:VERSION, fecha:d.toISOString(), datos}), 'application/json');
+    };
+    const inp = box.querySelector('#bkArchivo');
+    box.querySelector('#bkImportar').onclick = ()=> inp.click();
+    inp.onchange = ()=>{
+      const f = inp.files && inp.files[0]; if(!f) return;
+      const r = new FileReader();
+      r.onload = ()=>{
+        try{
+          const o = JSON.parse(r.result);
+          if(o.app!=='comunicador' || typeof o.datos!=='object') throw new Error('formato');
+          if(!confirm('Se reemplazarán los datos actuales por los de la copia. ¿Continuar?')) return;
+          const viejas = [];
+          for(let i=0;i<localStorage.length;i++){ const k = localStorage.key(i); if(k && k.startsWith('comunicador_')) viejas.push(k); }
+          viejas.forEach(k=> localStorage.removeItem(k));
+          Object.entries(o.datos).forEach(([k,v])=>{ if(k.startsWith('comunicador_') && typeof v==='string') localStorage.setItem(k, v); });
+          location.reload();
+        }catch(e){ alert('Ese archivo no es una copia válida del comunicador.'); }
+      };
+      r.readAsText(f);
+    };
+  });
+}
+
+/* ======================================================================
+   AYUDA Y CREDITOS
+   ====================================================================== */
+function abrirAyuda(){
+  panel('❓ Ayuda y créditos', `
+    <h3>Cómo usarlo</h3>
+    <div class="nota" style="opacity:1; font-size:0.9rem">
+      1. Toca los dibujos para armar una frase; cada palabra se dice en voz alta.<br>
+      2. Pulsa <b>Hablar frase</b> para decirla completa, o ⭐ para guardarla.<br>
+      3. La barra de arriba (<i>quiero, más, no, sí, ayuda…</i>) siempre está en el mismo lugar: son las palabras más usadas.<br>
+      4. 📋 muestra “Primero… luego…” para anticipar actividades.<br>
+      5. En <b>Mis palabras</b> puedes agregar palabras con dibujo o con foto real.<br>
+      6. En ⚙️ el cuidador oculta palabras, cambia la voz, ve estadísticas y hace copias de seguridad.
+    </div>
+    <h3>Consejos para el cuidador</h3>
+    <div class="nota" style="opacity:1; font-size:0.9rem">
+      • Modele el uso: toque los dibujos mientras habla, como se enseña a hablar con el ejemplo.<br>
+      • Empiece con pocas palabras visibles y vaya agregando; las posiciones no cambian.<br>
+      • No quite la palabra de la mano: ofrezca la opción y espere.
+    </div>
+    <h3>Privacidad</h3>
+    <div class="nota" style="opacity:1; font-size:0.9rem">Esta app no usa cuentas ni envía datos a ningún servidor. Palabras, fotos, frases y estadísticas se guardan únicamente en este dispositivo. Con la copia de seguridad usted decide si los pasa a otro lugar.</div>
+    <h3>Créditos</h3>
+    <div class="nota" style="opacity:1; font-size:0.9rem">
+      Mi Comunicador · versión ${VERSION}<br>
+      Proyecto de grado, UTESA – Ingeniería en Sistemas Computacionales<br>
+      Randy Herasme y Johan Abreu · Asesor: Elvys Cruz, M.A.<br>
+      Pictogramas: emojis Unicode del dispositivo. Voz: síntesis de voz del navegador (Web Speech API).
+    </div>`);
+}
+
+/* ======================================================================
+   PRIMERO - LUEGO
+   ====================================================================== */
+function slotHTML(i){
+  const w = pl[i];
+  const etq = i===0 ? 'Primero' : 'Luego';
+  return `<span class="etq">${etq}</span>` + (w ? icono(w.emoji)+`<span>${esc(w.palabra)}</span>` : '<span style="opacity:.5">Elige</span>');
+}
+function renderPL(){
+  [0,1].forEach(i=>{
+    const s = document.getElementById('slot'+i);
+    s.innerHTML = slotHTML(i);
+    s.classList.toggle('activo', plSlot===i);
+    s.onclick = ()=>{ plSlot = i; renderPL(); };
+  });
+  const cat = categorias.find(c=>c.id===document.getElementById('plCat').value) || categorias[0];
+  const g = document.getElementById('plGrid');
+  g.innerHTML = '';
+  cat.items.forEach(([emoji,palabra])=>{
+    if(ocultas.includes(claveDe(cat.id,palabra))) return;
+    const t = document.createElement('button');
+    t.className = 'tile';
+    t.style.background = cat.color;
+    t.innerHTML = icono(emoji)+`<span>${esc(palabra)}</span>`;
+    t.onclick = ()=>{
+      pl[plSlot] = {emoji, palabra};
+      LS.set('primeroluego', pl);
+      if(plSlot===0) plSlot = 1;
+      renderPL();
+    };
+    g.appendChild(t);
+  });
+}
+document.getElementById('btnPL').onclick = ()=>{
+  const sel = document.getElementById('plCat');
+  if(!sel.options.length){
+    categorias.filter(c=>c.id!=='frases').forEach(c=>{ const o = document.createElement('option'); o.value = c.id; o.textContent = c.nombre; sel.appendChild(o); });
+    sel.onchange = renderPL;
+  }
+  plSlot = pl[0] ? (pl[1] ? 0 : 1) : 0;
+  renderPL(); abrir('modalPL');
+};
+document.getElementById('plHablar').onclick = ()=>{
+  if(!pl[0] && !pl[1]) return;
+  const partes = [];
+  if(pl[0]) partes.push('Primero '+pl[0].palabra);
+  if(pl[1]) partes.push('luego '+pl[1].palabra);
+  hablar(partes.join(', '));
+};
+document.getElementById('plLimpiar').onclick = ()=>{ pl = [null,null]; LS.set('primeroluego', pl); plSlot = 0; renderPL(); };
+document.getElementById('plCerrar').onclick = ()=> cerrar('modalPL');
+
+/* ======================================================================
+   INICIO
+   ====================================================================== */
+cargarPerfil();
+(async ()=>{   // migracion: el PIN de la version anterior se guardaba dentro de los ajustes
+  if(ajustes.pin){
+    if(!LSG.get('pin','')) LSG.set('pin', await hashPin(ajustes.pin));
+    delete ajustes.pin; guardarAjustes();
+  }
+})();
+renderAll();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(e=> console.log('sw no disponible', e));
+  });
+}
 </script>
 </body>
 </html>
